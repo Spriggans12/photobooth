@@ -2,8 +2,8 @@
 "CAMERA_BUTTON_PIN" : 21 # GPIO pin that is connected to 'take photo' button
 "EXIT_BUTTON_PIN"   : 13 # GPIO pin that is connected to 'exit' button (optional)
 "TOTAL_PICS"        : 4  # Number of pics to be taken
-"PREP_DELAY"        : 2  # Number of seconds as users prepare to have photo taken, before countdown commences
-"COUNTDOWN"         : 3  # Number of seconds to count down from
+"PREP_DELAY"        : 4  # Number of seconds as users prepare to have photo taken, before countdown commences
+"COUNTDOWN"         : 2  # Number of seconds to count down from
 
 #GPIO Debounce Duration
 # (This may help avoid "phantom presses" caused by electronic interference)

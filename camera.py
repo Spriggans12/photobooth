@@ -237,7 +237,7 @@ def prep_for_photo_screen(photo_number):
     """
 
     #Get ready for the next photo
-    get_ready_image = REAL_PATH + '/assets/get_ready_' + str(photo_number) + '.png'
+    get_ready_image = REAL_PATH + '/assets/01_get_ready_' + str(photo_number) + '.png'
     overlay_image(get_ready_image, PREP_DELAY, 3, 'RGBA')
 
 def taking_photo(photo_number, filename_prefix):
@@ -266,11 +266,13 @@ def playback_screen(filename_prefix):
 
     #Processing
     print('Processing...')
-    processing_image = REAL_PATH + '/assets/processing.png'
+    processing_image = REAL_PATH + '/assets/02_done.png'
     overlay_image(processing_image, 2)
 
     # Grille
-    grid_image = REAL_PATH + '/assets/Grid.png'
+    grid_image = REAL_PATH + '/assets/03_grid.png'
+    back_image = REAL_PATH + '/assets/03_background.png'
+    back_overlay = overlay_image(back_image, 0, 4, mode='RGBA')
     grid_overlay = overlay_image(grid_image, 0, 10, mode='RGBA')
     
     # Affiche les 4 images
@@ -292,6 +294,7 @@ def playback_screen(filename_prefix):
     # Removes all overlays
     
     remove_overlay(grid_overlay)
+    remove_overlay(back_overlay)
     remove_overlay(o1)
     remove_overlay(o2)
     remove_overlay(o3)
@@ -299,7 +302,7 @@ def playback_screen(filename_prefix):
     
     #All done
     print('All done!')
-    finished_image = REAL_PATH + '/assets/all_done_delayed_upload.png'
+    finished_image = REAL_PATH + '/assets/04_thank_you.png'
     overlay_image(finished_image, 5)
 
 def main():
@@ -323,8 +326,8 @@ def main():
     print(CAMERA.preview.resolution)
 
     #Display intro screen
-    intro_image_1 = REAL_PATH + '/assets/intro_1.png'
-    intro_image_2 = REAL_PATH + '/assets/intro_2.png'
+    intro_image_1 = REAL_PATH + '/assets/00_intro_1.png'
+    intro_image_2 = REAL_PATH + '/assets/00_intro_2.png'
     
     
     overlay_1 = overlay_image(intro_image_1, 0, 3)
