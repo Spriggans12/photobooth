@@ -14,9 +14,6 @@ from PIL import Image
 from ruamel import yaml
 import picamera
 
-#############################
-### Load config from file ###
-#############################
 PATH_TO_CONFIG = 'camera-config.yaml'
 
 #Read config file using YAML interpreter
@@ -56,9 +53,6 @@ CAMERA.annotate_text_size = 80
 CAMERA.resolution = (PHOTO_W, PHOTO_H)
 CAMERA.hflip = CAMERA_HFLIP
 
-########################
-### Helper Functions ###
-########################
 def health_test_required_folders():
     folders_list=[SAVE_RAW_IMAGES_FOLDER]
     folders_checked=[]
@@ -126,9 +120,6 @@ def overlay_image(image_path, duration=0, layer=3, mode='RGB', window=None):
 
     return o_id
 
-###############
-### Screens ###
-###############
 def prep_for_photo_screen(photo_number):
     #Get ready for the next photo
     get_ready_image = REAL_PATH + '/assets/01_get_ready_' + str(photo_number) + '.png'
