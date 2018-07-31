@@ -95,6 +95,8 @@ def main():
                 #Button has been pressed!
                 print('Button pressed!')
                 print_overlay("TEST !")
+                sleep(1)
+                CAMERA.annotate_text = ''
                 
                 #Remove pending button presses
                 cleanPending = True
