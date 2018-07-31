@@ -50,6 +50,26 @@ CAMERA.hflip = CAMERA_HFLIP
 def print_overlay(string_to_print):
     CAMERA.annotate_text = string_to_print
 
+def waitForDeviceToReconnect():
+    foundDevice = None
+    while foundDevice == None:
+        print "searching..."
+        sleep(1)
+        devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
+        if len(devices) == 0:
+            # Keep trying
+            print "No devs"
+            continue
+        for device in devices:
+            if device.name == 'AB Shutter3':
+                # Found it !
+                foundDevice = device
+    
+    print "Found it !"
+    print foundDevice
+    # At this point, we found it !
+    return foundDevice
+
 def main():
     """
     Main program loop
@@ -72,42 +92,65 @@ def main():
     if len(devices) == 0:
         print "No devices found, try bluetoothctl ? Is the remote turned on ?"
         sys.exit(1)
-   
+
+    # Search for remoteDevice
+    remoteDevice = None
     for device in devices:
         if device.name == 'AB Shutter3':
             print(device)
             print "Connection set !"
-            device.grab()
+            remoteDevice = device
+    
+    if remoteDevice != None:
+        remoteDevice.grab()
             
-            # Event listener loop
-            while True:
-                photo_button_is_pressed = None
-                event = device.read_one()
-                
-                if event != None and event.type == evdev.ecodes.EV_KEY and event.code == 115 and event.value == 01:
-                    photo_button_is_pressed = True
-
-                #Stay inside loop, until button is pressed
-                if photo_button_is_pressed is None:
-                    sleep(0.1)
+        # Event listener loop
+        while True:
+            photo_button_is_pressed = None
+            
+            try:
+                event = remoteDevice.read_one()
+            except BaseException as errr:
+                # If the remote disconnected...
+                if "[Errno 19] No such device" == str(errr):
+                    # We wait for a device reconnection
+                    print "Remote is disconnected ! Please plug it back on !!!"
+                    remoteDevice = waitForDeviceToReconnect()
+                    remoteDevice.grab()
+                    # Start while loop again
                     continue
+                else:
+                    print "Something very wrong happened !!!"
+                    print str(errr)
+                    sys.exit(1)
 
-                #Button has been pressed!
-                print('Button pressed!')
-                print_overlay("TEST !")
-                sleep(1)
-                CAMERA.annotate_text = ''
-                
-                #Remove pending button presses
-                cleanPending = True
-                while cleanPending == True:
-                    pendingEvent = device.read_one()
+            if event != None and event.type == evdev.ecodes.EV_KEY and event.code == 115 and event.value == 01:
+                photo_button_is_pressed = True
+
+            #Stay inside loop, until button is pressed
+            if photo_button_is_pressed is None:
+                sleep(0.1)
+                continue
+
+            #Button has been pressed!
+            print('Button pressed!')
+            print_overlay("TEST !")
+            sleep(1)
+            CAMERA.annotate_text = ''
+            
+            #Remove pending button presses
+            cleanPending = True
+            while cleanPending == True:
+                try:
+                    pendingEvent = remoteDevice.read_one()
                     if pendingEvent == None:
                         cleanPending = False
-                    else:
-                        print "Cleaned one event"
-                
-                print('Press the button to take a photo')
+                except BaseException as errr:
+                    # If the remote disconnected, we'll handle that later
+                    if "[Errno 19] No such device" == str(errr):
+                        break
+            
+            print('Press the button to take a photo')
 
 if __name__ == "__main__":
     try:
