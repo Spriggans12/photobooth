@@ -7,6 +7,7 @@ import datetime
 import os
 import evdev
 import keyboard
+import signal
 
 REAL_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -16,18 +17,20 @@ import picamera
 
 PATH_TO_CONFIG = 'camera-config.yaml'
 
+def date_for_log():
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+
 #Read config file using YAML interpreter
 with open(PATH_TO_CONFIG, 'r') as stream:
     CONFIG = {}
     try:
         CONFIG = yaml.safe_load(stream)
     except yaml.YAMLError as exc:
+        print(date_for_log())
         print(exc)
 
 #Required config
 try:
-    CAMERA_BUTTON_PIN = CONFIG['CAMERA_BUTTON_PIN']
-    EXIT_BUTTON_PIN = CONFIG['EXIT_BUTTON_PIN']
     TOTAL_PICS = CONFIG['TOTAL_PICS']
     PREP_DELAY = CONFIG['PREP_DELAY']
     COUNTDOWN = CONFIG['COUNTDOWN']
@@ -40,7 +43,7 @@ try:
     SAVE_RAW_IMAGES_FOLDER = CONFIG['SAVE_RAW_IMAGES_FOLDER']
 
 except KeyError as exc:
-    print('')
+    print(date_for_log())
     print('ERROR:')
     print(' - Problems exist within configuration file: [' + PATH_TO_CONFIG + '].')
     print(' - The expected configuration item ' + str(exc) + ' was not found.')
@@ -61,15 +64,17 @@ def health_test_required_folders():
         if folder not in folders_checked:
             folders_checked.append(folder)
         else:
+            print(date_for_log())
             print('ERROR: Cannot use same folder path ('+folder+') twice. Refer config file.')
 
         #Create folder if doesn't exist
         if not os.path.exists(folder):
+            print(date_for_log())
             print('Creating folder: ' + folder)
             os.makedirs(folder)
 
 def print_overlay(string_to_print):
-    print(string_to_print)
+    print(date_for_log() + ' : ' + string_to_print)
     CAMERA.annotate_text = string_to_print
 
 def get_base_filename_for_images():
@@ -135,11 +140,11 @@ def taking_photo(photo_number, filename_prefix):
 
     CAMERA.annotate_text = ''
     CAMERA.capture(filename)
-    print('Photo (' + str(photo_number) + ') saved: ' + filename)
+    print(date_for_log() + ' : Photo (' + str(photo_number) + ') saved: ' + filename)
     return filename
 
 def playback_screen(filename_prefix):
-    print('Processing...')
+    print(date_for_log() + ' : Processing images')
     processing_image = REAL_PATH + '/assets/02_done.png'
     overlay_image(processing_image, 2)
 
@@ -172,14 +177,14 @@ def playback_screen(filename_prefix):
     remove_overlay(o2)
     remove_overlay(o3)
     remove_overlay(o4)
-    print('All done!')
+    print(date_for_log() + ' : All done.')
     finished_image = REAL_PATH + '/assets/04_thank_you.png'
     overlay_image(finished_image, 5)
 
 def waitForDeviceToReconnect():
     foundDevice = None
     while foundDevice == None:
-        print "searching..."
+        print(date_for_log() + " : searching...")
         sleep(1)
         devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
         if len(devices) == 0:
@@ -191,8 +196,9 @@ def waitForDeviceToReconnect():
                 # Found it !
                 foundDevice = device
     
-    print "Found it !"
-    print foundDevice
+    print(date_for_log())
+    print("Found AB Shutter 3 !")
+    print(foundDevice)
     # At this point, we found it !
     return foundDevice
 
@@ -202,11 +208,13 @@ def main():
     """
 
     #Start Program
+    print ""
+    print(date_for_log())
+    print('-----------------------')
     print('Welcome to the photo booth!')
-    print('')
-    print('Press the \'Take photo\' button to take a photo')
-    print('Use [Ctrl] + [c] to exit')
-    print('')
+    print('Use shutdown.sh to exit')
+    print('-----------------------')
+    print ""
 
     #Setup any required folders (if missing)
     health_test_required_folders()
@@ -227,19 +235,24 @@ def main():
     devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
    
     if len(devices) == 0:
-        print "No devices found, try bluetoothctl ? Is the remote turned on ?"
+        print(date_for_log())
+        print "ERROR ! No devices found, try bluetoothctl ? Is the remote turned on ?"
+        print "Stopping program."
         sys.exit(1)
 
     # Search for remoteDevice
     remoteDevice = None
     for device in devices:
         if device.name == 'AB Shutter3':
+            print(date_for_log())
             print(device)
             print "Connection set !"
             remoteDevice = device
    
     if remoteDevice != None:
         remoteDevice.grab()
+        print(date_for_log())
+        print "Waiting for button to be pressed."
             
         # Event listener loop
         while True:
@@ -251,14 +264,19 @@ def main():
                 # If the remote disconnected...
                 if "[Errno 19] No such device" == str(errr):
                     # We wait for a device reconnection
+                    print(date_for_log())
                     print "Remote is disconnected ! Please plug it back on !!!"
                     remoteDevice = waitForDeviceToReconnect()
                     remoteDevice.grab()
                     # Start while loop again
+                    print(date_for_log())
+                    print "Waiting for button to be pressed."
                     continue
                 else:
-                    print "Something very wrong happened !!!"
+                    print(date_for_log())
+                    print "ERROR ! Something very wrong happened !!!"
                     print str(errr)
+                    print "Stopping program."
                     sys.exit(1)
             
             if event != None and event.type == evdev.ecodes.EV_KEY and event.code == 115 and event.value == 01:
@@ -278,7 +296,7 @@ def main():
                 continue
 
             #Button has been pressed!
-            print('Button pressed!')
+            print(date_for_log() + ' : Button pressed!')
 
             #Get filenames for images
             filename_prefix = get_base_filename_for_images()
@@ -310,17 +328,35 @@ def main():
                     # If the remote disconnected, we'll handle that later
                     if "[Errno 19] No such device" == str(errr):
                         break
+                    else:
+                        print(date_for_log())
+                        print "ERROR ! Something very wrong happened !!!"
+                        print str(errr)
+                        print "Stopping program."
+                        sys.exit(1)
             
-            print('Press the button to take a photo')
+            print(date_for_log())
+            print "Waiting for button to be pressed."
+
+
+def sigterm_handler(signum, frame):
+    print ""
+    print(date_for_log())
+    print('Interruption signal received.')
+    print('Stopping program.')
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, sigterm_handler)
+signal.signal(signal.SIGINT, sigterm_handler)
 
 if __name__ == "__main__":
     try:
         main()
 
-    except KeyboardInterrupt:
-        print('Goodbye')
-
     finally:
+        print ""
+        print(date_for_log() + " : Destroying CAMERA")
         CAMERA.stop_preview()
         CAMERA.close()
+        print(date_for_log() + ' : All is good.')
         sys.exit()

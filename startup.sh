@@ -1,0 +1,1 @@
+python -u camera.py >> logs/logs.txt 2>&1 &
